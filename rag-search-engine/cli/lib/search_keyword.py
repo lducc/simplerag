@@ -2,28 +2,12 @@ import json
 from pathlib import Path
 import token
 from typing import List, Dict
-from lib.search_utils import load_movies, load_stopwords
+from lib.utils import pre_process
+from lib.inverted_index import InvertedIndex
+
 # import nltk
 # from nltk.corpus import stopwords
 # from nltk.tokenize import word_tokenize
-from nltk.stem import PorterStemmer
-import string
-
-
-def pre_process(text: str) -> List[str]:
-    """
-        Text -> Lowercase -> Remove puncs
-        -> Tokenize -> Remove stop words
-        -> Stemming
-    """
-    text = text.lower().translate(str.maketrans('', '', string.punctuation))
-    tokens = text.split()
-
-    stopwords = load_stopwords()
-    stemmer = PorterStemmer()
-    tokens = [stemmer.stem(token) for token in tokens if token not in stopwords]
-
-    return tokens
 
 def matched_tokens_exists(movie_tokens: List[str], query_tokens: List[str]) -> bool:
     for q_token in query_tokens:
@@ -33,18 +17,24 @@ def matched_tokens_exists(movie_tokens: List[str], query_tokens: List[str]) -> b
 
     return False
 
-def search(query: str, top_k: int) -> List[str]:
-    movies = load_movies()
-    search_result = []
+def search(query: str, limit: int) -> List[str]:
+    idx = InvertedIndex()
+    idx.load()
+
     query_tokens = pre_process(query)
+    seen, result = set(), []
 
-    for movie in movies:
-        movie_title = movie.get('title')
-        movie_tokens = pre_process(movie_title)
-        if matched_tokens_exists(movie_tokens, query_tokens):
-            search_result.append(movie_title)
+    for token in query_tokens:
+        movie_ids = idx.get_documents(token)
+        for m_id in movie_ids:
+            if m_id in seen:
+                continue
 
-        if len(search_result) > top_k:
-            break
+            seen.add(m_id)
+            doc = idx.docmap[m_id]
+            result.append(doc)
 
-    return search_result
+            if len(result) >= limit:
+                return result
+
+    return result
