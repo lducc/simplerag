@@ -8,6 +8,9 @@ ROOT = Path(__file__).resolve().parents[2]
 DATA_PATH = ROOT/'data'
 CACHE_PATH = ROOT/'cache'
 
+BM25_K = 1.5
+BM25_B = 0.75
+
 def load_movies() -> List[Dict]:
     with open(DATA_PATH/'movies.json', "r") as file:
         raw = json.load(file)
@@ -23,7 +26,7 @@ def load_stopwords() -> List[str]:
 
 def pre_process(text: str) -> List[str]:
     """
-        Text -> Lowercase -> Remove puncs
+        Text ->w Lowercase -> Remove puncs
         -> Tokenize -> Remove stop words
         -> Stemming
     """
