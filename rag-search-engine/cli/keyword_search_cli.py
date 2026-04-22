@@ -1,13 +1,22 @@
 import argparse
 from lib.search_keyword import search
 from lib.inverted_index import InvertedIndex
+import math
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Keyword Seach CLI")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
     subparsers.add_parser("build", help="Build the inverted index")
+
+    tf_parser = subparsers.add_parser("tf", help="Term frequency search")
+    tf_parser.add_argument("doc_id", type=int, help="Document ID")
+    tf_parser.add_argument("term", type=str, help="Term")
+
     search_parser = subparsers.add_parser("search", help="Search movies (BM25)")
     search_parser.add_argument("query", type=str, help="Search query")
+
+    idf_parser = subparsers.add_parser("idf", help="Compute IDF value")
+    idf_parser.add_argument("term", type=str, help="Term")
 
     args = parser.parse_args()
 
@@ -16,7 +25,6 @@ def main() -> None:
             index = InvertedIndex()
             index.build()
             index.save()
-            docs = index.get_documents("merida")
         case "search":
             index = InvertedIndex()
             try:
@@ -29,7 +37,15 @@ def main() -> None:
 
             for i, result in enumerate(query_results):
                 print(f"{i}. {result}")
-
+        case "tf":
+            index = InvertedIndex()
+            index.load()
+            print(index.get_tf(args.doc_id, args.term))
+        case "idf":
+            index = InvertedIndex()
+            index.load()
+            idf = index.get_idf(args.term)
+            print(f"Inverse document frequency of '{args.term}': {idf:.2f}")
         case _:
             parser.print_help()
 
