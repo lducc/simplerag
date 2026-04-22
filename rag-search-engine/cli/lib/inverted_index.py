@@ -1,4 +1,5 @@
 from csv import Error
+from socket import TCP_DEFER_ACCEPT
 from sqlite3 import NotSupportedError
 from typing import List, Dict
 from pathlib import Path
@@ -46,6 +47,12 @@ class InvertedIndex:
         doc_count = len(self.docmap)
         term_doc_count = len(self.index[token])
         return math.log((doc_count + 1) / (term_doc_count + 1))
+
+    def get_tf_idf(self, doc_id: int, term: str) -> float:
+        tf_value = self.get_tf(doc_id, term)
+        idf_value = self.get_idf(term)
+
+        return tf_value * idf_value
 
     def build(self) -> None:
         movies = load_movies()
